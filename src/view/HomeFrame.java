@@ -5,6 +5,8 @@
 package view;
 
 import java.awt.CardLayout;
+import controller.StaffController;
+import model.StaffManager;
 
 /**
  *
@@ -13,12 +15,292 @@ import java.awt.CardLayout;
 public class HomeFrame extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(HomeFrame.class.getName());
+    private StaffController staffController;
+    private StaffManager staffManager;
 
     /**
      * Creates new form HomeFrame
      */
     public HomeFrame() {
         initComponents();
+    }
+    
+    public HomeFrame(StaffManager manager, StaffController controller) {
+        this.staffManager = manager;
+        this.staffController = controller;
+        initComponents();
+        setupButtonHandlers();
+    }
+    
+    private void setupButtonHandlers() {
+        // Add Staff button handler
+        jButton1.addActionListener(e -> onAddStaff());
+        // Edit Staff button
+        jButton2.addActionListener(e -> onEditStaff());
+        // Delete Staff button
+        jButton3.addActionListener(e -> onDeleteStaff());
+        // Undo Delete button
+        jButton4.addActionListener(e -> onUndoDelete());
+        // Clear/Refresh button
+        jButton5.addActionListener(e -> onClearSelection());
+        
+        // Style buttons for better appearance
+        styleButtons();
+        
+        // Initial data load
+        refreshHomePanel();
+        refreshDashboard();
+        refreshStaffTable();
+    }
+    
+    private void styleButtons() {
+        // Style CRUD buttons in Manage Staff panel
+        jButton1.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        jButton1.setBackground(new java.awt.Color(76, 175, 80)); // Green for Add
+        jButton1.setForeground(java.awt.Color.BLACK);
+        jButton1.setFocusPainted(false);
+        jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButton1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(56, 142, 60), 2));
+        jButton1.setOpaque(true);
+        jButton1.setPreferredSize(new java.awt.Dimension(120, 35));
+        
+        jButton2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        jButton2.setBackground(new java.awt.Color(33, 150, 243)); // Blue for Edit
+        jButton2.setForeground(java.awt.Color.BLACK);
+        jButton2.setFocusPainted(false);
+        jButton2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButton2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(21, 101, 192), 2));
+        jButton2.setOpaque(true);
+        jButton2.setPreferredSize(new java.awt.Dimension(120, 35));
+        
+        jButton3.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        jButton3.setBackground(new java.awt.Color(244, 67, 54)); // Red for Delete
+        jButton3.setForeground(java.awt.Color.BLACK);
+        jButton3.setFocusPainted(false);
+        jButton3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButton3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(198, 40, 40), 2));
+        jButton3.setOpaque(true);
+        jButton3.setPreferredSize(new java.awt.Dimension(120, 35));
+        
+        jButton4.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        jButton4.setBackground(new java.awt.Color(255, 152, 0)); // Orange for Undo
+        jButton4.setForeground(java.awt.Color.BLACK);
+        jButton4.setFocusPainted(false);
+        jButton4.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButton4.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(230, 81, 0), 2));
+        jButton4.setOpaque(true);
+        jButton4.setPreferredSize(new java.awt.Dimension(120, 35));
+        
+        jButton5.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        jButton5.setBackground(new java.awt.Color(96, 125, 139)); // Gray for Clear
+        jButton5.setForeground(java.awt.Color.BLACK);
+        jButton5.setFocusPainted(false);
+        jButton5.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButton5.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(69, 90, 100), 2));
+        jButton5.setOpaque(true);
+        jButton5.setPreferredSize(new java.awt.Dimension(120, 35));
+        
+        // Force repaint
+        jButton1.repaint();
+        jButton2.repaint();
+        jButton3.repaint();
+        jButton4.repaint();
+        jButton5.repaint();
+    }
+    
+    private void onAddStaff() {
+        StaffFormDialog dialog = new StaffFormDialog(this, staffController, null);
+        dialog.setVisible(true);
+        
+        if (dialog.wasSaved()) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Staff added successfully!", 
+                "Success", 
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            refreshStaffTable();
+            refreshHomePanel();
+            refreshDashboard();
+        }
+    }
+    
+    private void onEditStaff() {
+        int selectedRow = jTable2.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Please select a staff member to edit.",
+                "No Selection",
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Get staff ID from table
+        int staffId = (int) jTable2.getValueAt(selectedRow, 0);
+        
+        // Find staff object
+        model.Staff staff = null;
+        for (model.Staff s : staffManager.getAll()) {
+            if (s.getId() == staffId) {
+                staff = s;
+                break;
+            }
+        }
+        
+        if (staff != null) {
+            StaffFormDialog dialog = new StaffFormDialog(this, staffController, staff);
+            dialog.setVisible(true);
+            
+            if (dialog.wasSaved()) {
+                javax.swing.JOptionPane.showMessageDialog(this,
+                    "Staff updated successfully!",
+                    "Success",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                refreshStaffTable();
+                refreshHomePanel();
+                refreshDashboard();
+            }
+        }
+    }
+    
+    private void onDeleteStaff() {
+        int selectedRow = jTable2.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Please select a staff member to delete.",
+                "No Selection",
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int staffId = (int) jTable2.getValueAt(selectedRow, 0);
+        String staffName = (String) jTable2.getValueAt(selectedRow, 1);
+        
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to delete " + staffName + " (ID: " + staffId + ")?",
+            "Confirm Delete",
+            javax.swing.JOptionPane.YES_NO_OPTION,
+            javax.swing.JOptionPane.WARNING_MESSAGE);
+        
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            model.Staff deleted = staffController.deleteStaffById(staffId);
+            if (deleted != null) {
+                javax.swing.JOptionPane.showMessageDialog(this,
+                    "Staff deleted successfully! You can undo this action.",
+                    "Success",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                refreshStaffTable();
+                refreshHomePanel();
+                refreshDashboard();
+            }
+        }
+    }
+    
+    private void onUndoDelete() {
+        model.Staff restored = staffController.undoLastDelete();
+        if (restored != null) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Staff member restored: " + restored.getName(),
+                "Undo Successful",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            refreshStaffTable();
+            refreshHomePanel();
+            refreshDashboard();
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "No deleted staff to restore.",
+                "Nothing to Undo",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    private void onClearSelection() {
+        // Clear table selection
+        jTable2.clearSelection();
+        
+        // Refresh data to show all staff
+        refreshStaffTable();
+        
+        // Show feedback
+        javax.swing.JOptionPane.showMessageDialog(this,
+            "Selection cleared and data refreshed!",
+            "Cleared",
+            javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void refreshStaffTable() {
+        // Get staff data
+        java.util.List<model.Staff> staffList = staffManager.getAll();
+        
+        // Create table model
+        String[] columnNames = {"ID", "Name", "Position", "Shift", "Contact"};
+        Object[][] data = new Object[staffList.size()][5];
+        
+        for (int i = 0; i < staffList.size(); i++) {
+            model.Staff staff = staffList.get(i);
+            data[i][0] = staff.getId();
+            data[i][1] = staff.getName();
+            data[i][2] = staff.getPosition();
+            data[i][3] = staff.getShift().getLabel();
+            data[i][4] = staff.getContact();
+        }
+        
+        javax.swing.table.DefaultTableModel tableModel = 
+            new javax.swing.table.DefaultTableModel(data, columnNames) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false; // Make table read-only
+                }
+            };
+        
+        jTable2.setModel(tableModel);
+        jTable2.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+    }
+    
+    private void refreshHomePanel() {
+        // Update recent staff table (jTable1)
+        java.util.Deque<model.Staff> recentQueue = staffManager.getRecentQueue();
+        java.util.List<model.Staff> recentList = new java.util.ArrayList<>(recentQueue);
+        
+        String[] columnNames = {"ID", "Name", "Position", "Shift", "Contact"};
+        Object[][] data = new Object[recentList.size()][5];
+        
+        for (int i = 0; i < recentList.size(); i++) {
+            model.Staff staff = recentList.get(i);
+            data[i][0] = staff.getId();
+            data[i][1] = staff.getName();
+            data[i][2] = staff.getPosition();
+            data[i][3] = staff.getShift().getLabel();
+            data[i][4] = staff.getContact();
+        }
+        
+        javax.swing.table.DefaultTableModel tableModel = 
+            new javax.swing.table.DefaultTableModel(data, columnNames) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+        
+        jTable1.setModel(tableModel);
+        
+        // Update total staff count in home panel
+        jLabel5.setText(String.valueOf(staffController.totalStaff()));
+        jLabel7.setText(String.valueOf(staffController.countByShift(model.Shift.MORNING)));
+        jLabel9.setText(String.valueOf(staffController.countByShift(model.Shift.DAY)));
+        jLabel11.setText(String.valueOf(staffController.countByShift(model.Shift.NIGHT)));
+    }
+    
+    private void refreshDashboard() {
+        // Update dashboard statistics with dynamic data
+        int totalStaff = staffController.totalStaff();
+        int morningShift = staffController.countByShift(model.Shift.MORNING);
+        int dayShift = staffController.countByShift(model.Shift.DAY);
+        int nightShift = staffController.countByShift(model.Shift.NIGHT);
+        
+        // Update labels in dashboard panel
+        jLabel15.setText(String.valueOf(totalStaff));
+        jLabel17.setText(String.valueOf(morningShift));
+        jLabel19.setText(String.valueOf(dayShift));
+        jLabel21.setText(String.valueOf(nightShift));
     }
 
     /**
@@ -1032,14 +1314,14 @@ public class HomeFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
-        // TODO add your handling code here:
+        refreshDashboard();
         CardLayout cl = (CardLayout) cardPanel.getLayout();
         cl.show(cardPanel, "dashboardCard");
         
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-        // TODO add your handling code here:
+        refreshStaffTable();
         CardLayout cl = (CardLayout) cardPanel.getLayout();
         cl.show(cardPanel, "manageStaffCard");
     }//GEN-LAST:event_jButton8ActionPerformed
@@ -1059,7 +1341,7 @@ public class HomeFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton11ActionPerformed
 
     private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
-        // TODO add your handling code here:
+        refreshHomePanel();
         CardLayout cl = (CardLayout) cardPanel.getLayout();
         cl.show(cardPanel, "homeCard");
     }//GEN-LAST:event_jButton12ActionPerformed

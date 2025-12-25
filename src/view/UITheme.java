@@ -4,10 +4,19 @@
  */
 package view;
 
+import javax.swing.*;
+
 /**
  *
  * @author HELIOS
  */
 public class UITheme {
     
+    public static void install() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
