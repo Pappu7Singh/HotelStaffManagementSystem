@@ -10,16 +10,35 @@ package model;
  */
 
 public class Staff {
-    private int id;
-    private String name;
-    private String position;
-    private Shift shift;
-    private String contact;
 
-    public Staff(int id, String name, String position, Shift shift, String contact) {
+    private final int id;
+    private final String name;
+    private final String position;
+    private final String shift;
+    private final String contact;
+
+    public Staff(int id, String name, String position, String shift, String contact) {
+
+        if (id <= 0)
+            throw new IllegalArgumentException("ID must be positive.");
+
+        if (name == null || name.trim().isEmpty())
+            throw new IllegalArgumentException("Name cannot be empty.");
+
+        if (position == null || position.trim().isEmpty())
+            throw new IllegalArgumentException("Position cannot be empty.");
+
+        if (!shift.equalsIgnoreCase("Morning")
+                && !shift.equalsIgnoreCase("Day")
+                && !shift.equalsIgnoreCase("Night"))
+            throw new IllegalArgumentException("Shift must be Morning, Day, or Night.");
+
+        if (contact == null || !contact.matches("\\d{9,15}"))
+            throw new IllegalArgumentException("Invalid contact number.");
+
         this.id = id;
-        this.name = name;
-        this.position = position;
+        this.name = name.trim();
+        this.position = position.trim();
         this.shift = shift;
         this.contact = contact;
     }
@@ -27,12 +46,6 @@ public class Staff {
     public int getId() { return id; }
     public String getName() { return name; }
     public String getPosition() { return position; }
-    public Shift getShift() { return shift; }
+    public String getShift() { return shift; }
     public String getContact() { return contact; }
-
-    public void setId(int id) { this.id = id; }
-    public void setName(String name) { this.name = name; }
-    public void setPosition(String position) { this.position = position; }
-    public void setShift(Shift shift) { this.shift = shift; }
-    public void setContact(String contact) { this.contact = contact; }
 }
